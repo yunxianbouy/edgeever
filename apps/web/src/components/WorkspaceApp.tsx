@@ -1282,6 +1282,7 @@ export const WorkspaceApp = ({
 
   useWorkspaceSyncLifecycle({
     pendingSyncCount: syncSummary.total,
+    backgroundRefreshKey: localDataScope,
     refreshWorkspace: refreshWorkspaceFromServer,
     runQueuedSync,
     setOnline: setIsOnline,

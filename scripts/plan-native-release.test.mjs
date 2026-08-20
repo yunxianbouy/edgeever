@@ -82,7 +82,7 @@ describe("native release planning", () => {
 
   test("does not rebuild desktop for release notes or a root version bump alone", () => {
     expect(
-      planNativeRelease("desktop", ["package.json", "AGENTS.md"]),
+      planNativeRelease("desktop", ["package.json", "release-summary.json", "AGENTS.md"]),
     ).toEqual({ rebuild: false, relevantChanges: [] });
   });
 });

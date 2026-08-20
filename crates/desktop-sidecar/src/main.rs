@@ -1169,8 +1169,6 @@ fn prepare_sync_bootstrap(database: &Connection) -> Result<Value, String> {
     let tx = database
         .unchecked_transaction()
         .map_err(|e| e.to_string())?;
-    tx.execute("DELETE FROM memos_fts WHERE memo_id = 'memo_welcome'", [])
-        .map_err(|e| e.to_string())?;
     tx.execute("DELETE FROM memos WHERE id = 'memo_welcome'", [])
         .map_err(|e| e.to_string())?;
     tx.execute(
