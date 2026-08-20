@@ -582,7 +582,7 @@ export const enUS = {
     unknown: "Unknown",
     copy: "Copy info",
     updateAvailableTitle: "New version available",
-    updateAvailableDescription: "<paragraph>Version v{{version}} is available. Cloudflare and Docker instances <strong>update automatically each day by default; no manual action is required</strong>.</paragraph><paragraph><strong>Do not use Sync fork to update EdgeEver</strong>; if you click it by mistake and it reports conflicts, you can safely ignore them.</paragraph><paragraph>To update immediately, Cloudflare users can run the Update deployed EdgeEver workflow, while Docker users can run ~/edgeever/update.sh.</paragraph><paragraph>The desktop app must be updated from the Releases page.</paragraph>",
+    updateAvailableDescription: "<paragraph>Version <strong>v{{version}}</strong> is available. Cloudflare and Docker instances update automatically each day by default.</paragraph><paragraph><strong>Do not use Sync fork</strong>; it may cause branch conflicts.</paragraph><paragraph>To update manually, Cloudflare users can run the <strong>Update deployed EdgeEver</strong> workflow, while Docker users can run <strong>~/edgeever/update.sh</strong>.</paragraph><paragraph>The latest <strong>desktop app</strong> is available from the Releases page.</paragraph>",
     viewRelease: "View update",
     latestVersion: "You are running the latest version",
     closeUpdateNotice: "Close update notice",
