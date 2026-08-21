@@ -19,6 +19,7 @@ describe("native release planning", () => {
       "packages/shared/src/index.ts",
       "bun.lock",
       "scripts/build-android-local.sh",
+      "scripts/configure-android-package-permissions.mjs",
       "scripts/verify-android-apk-signature.mjs",
       ".github/workflows/mobile-build.yml",
       ".github/workflows/store-delivery.yml",

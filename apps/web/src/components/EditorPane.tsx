@@ -128,6 +128,7 @@ import {
   getNotebookMoveOptions,
   type EditorContentAlignment,
   type MemoDocumentActionRequest,
+  type ShortcutSettings,
 } from "@/lib/app-helpers";
 import { copyEditorToWeChat, copyMarkdownToWeChat } from "@/lib/wechat-copy";
 import { ThemeBlock } from "./ThemeBlock";
@@ -632,6 +633,7 @@ type EditorPaneProps = {
   replaceFocusToken: number;
   saveAndSyncToken: number;
   editorModeToggleToken: number;
+  shortcutSettings: ShortcutSettings;
   onSyncRequested: () => Promise<void>;
   documentActionRequest?: MemoDocumentActionRequest | null;
   onDocumentActionConsumed?: (requestId: number) => void;
@@ -702,6 +704,7 @@ const RichEditorPane = ({
   replaceFocusToken,
   saveAndSyncToken,
   editorModeToggleToken,
+  shortcutSettings,
   onSyncRequested,
   documentActionRequest,
   onDocumentActionConsumed,
@@ -4127,6 +4130,7 @@ const RichEditorPane = ({
             readOnly={effectiveReadOnly}
             markdownMode={useMarkdownSourceEditor}
             onMarkdownModeChange={handleMarkdownModeChange}
+            markdownModeShortcut={shortcutSettings.toggleEditorMode}
             onPickAttachment={() => fileInputRef.current?.click()}
             onPickExternalLink={openExternalLinkDialog}
             externalLinkActive={externalLinkActive}

@@ -1,15 +1,11 @@
 {
-  "version": "1.35.0",
+  "version": "1.35.2",
   "changes": {
     "en-US": [
-      "Show localized deployment release summaries with clearer automatic-update status and guidance.",
-      "Reduce background database writes and sync polling while improving search and tag indexing, keeping larger notebooks responsive and up to date.",
-      "Keep attachment actions readable and easy to use in narrower layouts."
+      "Deliver current Android and native iOS builds to Google Play and the App Store; Play builds no longer request the sideload-only package installation permission."
     ],
     "zh-CN": [
-      "展示本地化的部署版本更新摘要，并提供更清晰的自动更新状态与操作指引。",
-      "减少后台数据库写入与同步轮询，并改进搜索和标签索引，让较大的笔记库保持流畅和及时更新。",
-      "优化窄屏布局下的附件操作栏，使操作保持清晰易用。"
+      "将当前 Android 与原生 iOS 版本交付至 Google Play 和 App Store；Play 构建不再请求仅供侧载更新使用的安装应用权限。"
     ]
   }
 }
