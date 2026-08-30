@@ -1,17 +1,15 @@
 {
-  "version": "1.48.0",
+  "version": "1.49.0",
   "changes": {
     "en-US": [
-      "Expand system diagnostics across Web, desktop, Android, and iOS, with clearer cloud and client details for troubleshooting.",
-      "Make background synchronization more predictable and prevent the desktop editor from reloading after creating a note.",
-      "Refine memo list spacing for a more consistent Web layout.",
-      "Open Android updates in the correct app store or download destination for each installation source."
+      "Add a Windows x64 Preview with secure automatic updates; unsigned builds may show a Windows security warning, so download only from the official EdgeEver Release.",
+      "Keep personal self-hosted instances aligned with each official Release automatically.",
+      "Reduce redundant demo seed writes to improve API reliability and database efficiency."
     ],
     "zh-CN": [
-      "扩展 Web、桌面端、Android 和 iOS 的系统诊断信息，清晰区分云端与客户端详情，便于排查问题。",
-      "让后台同步节奏更稳定，并避免桌面端新建笔记后编辑器意外重新加载。",
-      "优化备忘录列表间距，使 Web 界面布局更加一致。",
-      "根据 Android 应用的安装来源，将更新正确引导至对应应用商店或下载地址。"
+      "新增 Windows x64 预览版并支持安全自动更新；由于安装包暂未使用 Authenticode 签名，Windows 可能显示安全警告，请仅从 EdgeEver 官方 Release 下载。",
+      "个人自托管实例现在会随每个官方 Release 自动同步部署。",
+      "减少 Demo 示例数据的重复写入，提升 API 可靠性与数据库效率。"
     ]
   }
 }

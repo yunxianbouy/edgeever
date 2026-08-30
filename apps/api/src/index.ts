@@ -514,16 +514,37 @@ const ensureDemoSeed = async (
             .all<{ id: string }>()
         ).results.map((notebook) => notebook.id),
       );
-  const existingMemoIds = overwriteExisting
-    ? new Set<string>()
-    : new Set(
-        (
-          await db
-            .prepare(`SELECT id FROM memos WHERE id IN (${DEMO_SEED_MEMO_IDS.map(() => "?").join(", ")})`)
-            .bind(...DEMO_SEED_MEMO_IDS)
-            .all<{ id: string }>()
-        ).results.map((memo) => memo.id),
-      );
+  const existingMemoRows = overwriteExisting
+    ? []
+    : (
+        await db
+          .prepare(
+            `SELECT m.id, m.notebook_id, m.title, m.excerpt, m.tags_json, m.is_pinned,
+                    m.is_archived, m.is_deleted, c.content_hash, c.revision,
+                    s.title AS search_title, s.content_text AS search_content_text, s.tags AS search_tags
+             FROM memos m
+             LEFT JOIN memo_contents c ON c.memo_id = m.id
+             LEFT JOIN memo_search_documents s ON s.memo_id = m.id
+             WHERE m.id IN (${DEMO_SEED_MEMO_IDS.map(() => "?").join(", ")})`,
+          )
+          .bind(...DEMO_SEED_MEMO_IDS)
+          .all<{
+            id: string;
+            notebook_id: string;
+            title: string;
+            excerpt: string;
+            tags_json: string;
+            is_pinned: number;
+            is_archived: number;
+            is_deleted: number;
+            content_hash: string | null;
+            revision: number | null;
+            search_title: string | null;
+            search_content_text: string | null;
+            search_tags: string | null;
+          }>()
+      ).results;
+  const existingMemosById = new Map(existingMemoRows.map((memo) => [memo.id, memo]));
 
   for (const notebook of DEMO_SEED_NOTEBOOKS) {
     if (!shouldUpsertDemoSeedRecord(existingNotebookIds, notebook.id, overwriteExisting)) {
@@ -562,11 +583,6 @@ const ensureDemoSeed = async (
   }
 
   for (const memo of DEMO_SEED_MEMOS) {
-    const isOverviewSeedMemo = memo.id === "memo_demo_overview" || memo.id === "memo_demo_overview_en";
-    if (!overwriteExisting && !isOverviewSeedMemo && existingMemoIds.has(memo.id)) {
-      continue;
-    }
-
     const contentJson = markdownToDoc(memo.markdown);
     const applyDemoImageWidths = (nodes: any[]) => {
       for (const node of nodes) {
@@ -583,6 +599,25 @@ const ensureDemoSeed = async (
     }
     const contentText = docToText(contentJson);
     const contentHash = await sha256(memo.markdown + JSON.stringify(contentJson));
+    const excerpt = createExcerpt(contentText);
+    const tagsJson = JSON.stringify(normalizeTags(memo.tags));
+    const searchTags = memo.tags.join(" ");
+    const revision = "revision" in memo ? memo.revision : 0;
+    const existing = existingMemosById.get(memo.id);
+    const seedIsCurrent = existing
+      && existing.notebook_id === memo.notebookId
+      && existing.title === memo.title
+      && existing.excerpt === excerpt
+      && existing.tags_json === tagsJson
+      && existing.is_pinned === (memo.isPinned ? 1 : 0)
+      && existing.is_archived === 0
+      && existing.is_deleted === 0
+      && existing.content_hash === contentHash
+      && existing.revision === revision
+      && existing.search_title === memo.title
+      && existing.search_content_text === contentText
+      && existing.search_tags === searchTags;
+    if (!overwriteExisting && seedIsCurrent) continue;
 
     statements.push(
       db
@@ -607,8 +642,8 @@ const ensureDemoSeed = async (
           memo.id,
           memo.notebookId,
           memo.title,
-          createExcerpt(contentText),
-          JSON.stringify(normalizeTags(memo.tags)),
+          excerpt,
+          tagsJson,
           memo.isPinned ? 1 : 0,
           now,
           now
@@ -632,17 +667,44 @@ const ensureDemoSeed = async (
           memo.markdown,
           contentText,
           contentHash,
-          "revision" in memo ? memo.revision : 0,
+          revision,
           now,
           now,
         ),
-      upsertMemoSearchDocumentStatement(db, memo.id, memo.title, contentText, memo.tags.join(" "))
+      upsertMemoSearchDocumentStatement(db, memo.id, memo.title, contentText, searchTags)
     );
   }
+
+  const existingRevisionRows = overwriteExisting
+    ? []
+    : (
+        await db
+          .prepare(
+            `SELECT id, memo_id, revision, title, content_hash
+             FROM memo_revisions
+             WHERE id IN (${DEMO_SEED_REVISIONS.map(() => "?").join(", ")})`,
+          )
+          .bind(...DEMO_SEED_REVISIONS.map((revision) => revision.id))
+          .all<{
+            id: string;
+            memo_id: string;
+            revision: number;
+            title: string | null;
+            content_hash: string;
+          }>()
+      ).results;
+  const existingRevisionsById = new Map(existingRevisionRows.map((revision) => [revision.id, revision]));
 
   for (const revision of DEMO_SEED_REVISIONS) {
     const contentJson = markdownToDoc(revision.markdown);
     const contentHash = await sha256(revision.markdown + JSON.stringify(contentJson));
+    const existing = existingRevisionsById.get(revision.id);
+    const seedIsCurrent = existing
+      && existing.memo_id === revision.memoId
+      && existing.revision === revision.revision
+      && existing.title === revision.title
+      && existing.content_hash === contentHash;
+    if (!overwriteExisting && seedIsCurrent) continue;
 
     statements.push(
       db

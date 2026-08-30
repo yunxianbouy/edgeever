@@ -56,7 +56,7 @@ The public demo resets every day at 3:00 AM (China Standard Time) and restores s
 - **Batch Operations & Flexible Sorting**: Easily merge or relocate multiple notes, with drag-and-drop notebook reordering.
 - **Offline Drafts & Queueing**: Draft and edit uninterrupted while offline; changes automatically sync once reconnected.
 - **Multi-Tenant Account Isolation**: Host multiple user accounts on a single instance with strictly partitioned spaces and clean admin account management.
-- **Everywhere You Need It**: Available on the Web, [Android](https://play.google.com/store/apps/details?id=org.edgeever.mobile), [macOS](https://github.com/tianma-if/edgeever/releases), and [iOS](https://apps.apple.com/us/app/edgeever/id6792625631), with Windows coming soon; the Web Clipper supports [Chrome](https://chromewebstore.google.com/detail/edgeever-web-clipper/gjadpfmanienmlofajibkfkkpfdkclgo), [Edge](https://chromewebstore.google.com/detail/edgeever-web-clipper/gjadpfmanienmlofajibkfkkpfdkclgo), and [Firefox](https://addons.mozilla.org/firefox/addon/edgeever-web-clipper/).
+- **Everywhere You Need It**: Available on the Web, [Android](https://play.google.com/store/apps/details?id=org.edgeever.mobile), [macOS](https://github.com/tianma-if/edgeever/releases), [Windows x64 Preview](https://github.com/tianma-if/edgeever/releases/latest), and [iOS](https://apps.apple.com/us/app/edgeever/id6792625631); the Web Clipper supports [Chrome](https://chromewebstore.google.com/detail/edgeever-web-clipper/gjadpfmanienmlofajibkfkkpfdkclgo), [Edge](https://chromewebstore.google.com/detail/edgeever-web-clipper/gjadpfmanienmlofajibkfkkpfdkclgo), and [Firefox](https://addons.mozilla.org/firefox/addon/edgeever-web-clipper/).
 
 ## Deployment
 
@@ -139,7 +139,9 @@ Native clients offer a smoother, more reliable experience with deeper system int
 
 The Android app is now available on [Google Play](https://play.google.com/store/apps/details?id=org.edgeever.mobile), with signed APKs also available from [GitHub Releases](https://github.com/tianma-if/edgeever/releases). The iOS app is available on the [App Store](https://apps.apple.com/us/app/edgeever/id6792625631); use a non-mainland China Apple ID to download it.
 
-The macOS app is available from [GitHub Releases](https://github.com/tianma-if/edgeever/releases). The Windows version will be released once the code-signing certificate issue is resolved.
+The macOS app and the unsigned [Windows x64 Preview](https://github.com/tianma-if/edgeever/releases/latest) are available from GitHub Releases. Windows or organization policy may show a warning or block the Preview because it is not yet Authenticode-signed; download it only from the official EdgeEver Release. Do not weaken Windows security settings for EdgeEver—use the Web/PWA client if policy blocks installation.
+
+After installation, the Windows Preview keeps the normal automatic update experience: EdgeEver checks releases, validates an independently Ed25519-signed manifest before downloading, validates the downloaded installer again, and then prompts for restart installation (or installs when EdgeEver later quits). Missing or invalid metadata fails closed. See [Windows Preview security and updates](docs/windows-preview.md).
 
 On platforms without a native client, EdgeEver can be installed as a PWA using Chrome or Edge.
 

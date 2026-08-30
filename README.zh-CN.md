@@ -56,7 +56,7 @@ EdgeEver 是一款现代化的开源笔记工作区。它为你找回经典印�
 - **高效多选与批量操作**：支持笔记批量合并、批量移动，以及笔记本拖拽排序与层级调整。
 - **离线草稿与同步队列**：网络不稳定时自动保存离线草稿，恢复连线后自动入队同步。
 - **多账号与个人空间隔离**：单实例支持创建多个独立账号，用户数据相互隔离，配备直观的管理员账号管理与安全加密机制。
-- **全平台多端覆盖**：支持 Web、[Android](https://play.google.com/store/apps/details?id=org.edgeever.mobile)、[macOS](https://github.com/tianma-if/edgeever/releases) 和 [iOS](https://apps.apple.com/us/app/edgeever/id6792625631)，Windows 版即将推出；网页裁剪插件支持 [Chrome](https://chromewebstore.google.com/detail/edgeever-web-clipper/gjadpfmanienmlofajibkfkkpfdkclgo)、[Edge](https://chromewebstore.google.com/detail/edgeever-web-clipper/gjadpfmanienmlofajibkfkkpfdkclgo) 和 [Firefox](https://addons.mozilla.org/zh-CN/firefox/addon/edgeever-web-clipper/)。
+- **全平台多端覆盖**：支持 Web、[Android](https://play.google.com/store/apps/details?id=org.edgeever.mobile)、[macOS](https://github.com/tianma-if/edgeever/releases)、[Windows x64 预览版](https://github.com/tianma-if/edgeever/releases/latest) 和 [iOS](https://apps.apple.com/us/app/edgeever/id6792625631)；网页裁剪插件支持 [Chrome](https://chromewebstore.google.com/detail/edgeever-web-clipper/gjadpfmanienmlofajibkfkkpfdkclgo)、[Edge](https://chromewebstore.google.com/detail/edgeever-web-clipper/gjadpfmanienmlofajibkfkkpfdkclgo) 和 [Firefox](https://addons.mozilla.org/zh-CN/firefox/addon/edgeever-web-clipper/)。
 
 ## 部署
 
@@ -135,7 +135,9 @@ EdgeEver 官方容器镜像托管于 GitHub Container Registry（GHCR）。部�
 
 Android App 现已上架 [Google Play](https://play.google.com/store/apps/details?id=org.edgeever.mobile)，也可从 [GitHub Releases](https://github.com/tianma-if/edgeever/releases) 下载签名 APK。iOS App 现已上架 [App Store](https://apps.apple.com/us/app/edgeever/id6792625631)，可使用非大陆区的 Apple ID 下载。
 
-macOS App 可从 [GitHub Releases](https://github.com/tianma-if/edgeever/releases) 下载。Windows 版本正在处理代码签名证书问题，解决后即可发布。
+macOS App 与未签名的 [Windows x64 预览版](https://github.com/tianma-if/edgeever/releases/latest) 均可从 GitHub Releases 下载。Windows 预览版尚未使用 Authenticode 签名，系统或组织策略可能显示警告或阻止安装；请仅从 EdgeEver 官方 Release 下载。不要为安装 EdgeEver 降低 Windows 安全设置；如策略阻止安装，请继续使用 Web/PWA 客户端。
+
+安装后，Windows 预览版仍保留正常的自动更新体验：EdgeEver 发现新 Release 后，会在下载前验证独立 Ed25519 签名的更新清单，下载完成后再次验证安装包，再提示重启安装（选择稍后则在退出 EdgeEver 时自动安装）；清单缺失、签名错误或文件不一致都会停止更新。详见 [Windows 预览版安全与更新说明](docs/windows-preview.zh-CN.md)。
 
 暂无原生客户端的平台，可通过 Chrome 或 Edge 将 EdgeEver 安装为 PWA 使用。
 

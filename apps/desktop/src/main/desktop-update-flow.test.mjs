@@ -9,10 +9,20 @@ const notebookPaneSource = readFileSync(new URL("../../../web/src/components/Not
 
 describe("desktop update flow", () => {
   test("downloads updates in the background and relaunches after installation", () => {
-    expect(mainSource).toContain("autoUpdater.autoDownload = true");
+    expect(mainSource).toContain('autoUpdater.autoDownload = process.platform !== "win32"');
     expect(mainSource).toContain("autoUpdater.autoRunAppAfterInstall = true");
     expect(mainSource).toContain("isQuitting = true;\n  autoUpdater.quitAndInstall(false, true)");
     expect(mainSource).toContain("result?.downloadPromise");
+    expect(mainSource).toContain("downloadTrustedDesktopUpdate(reason)");
+  });
+
+  test("fails closed around unsigned Windows automatic updates", () => {
+    expect(mainSource).toContain("fetchTrustedWindowsUpdate({");
+    expect(mainSource).toContain("verifyDownloadedWindowsUpdate({");
+    expect(mainSource).toContain('autoUpdater.autoInstallOnAppQuit = process.platform !== "win32"');
+    expect(mainSource).toContain("windowsDownloadedUpdateVerified = true");
+    expect(mainSource).toContain('writeDiagnostic("update.windows-package-blocked"');
+    expect(mainSource).toContain('downloadTrustedDesktopUpdate("manual-download")');
   });
 
   test("offers a manual update check in desktop system settings", () => {
