@@ -20,7 +20,8 @@ Every suggestion must reference the current anchor and at least one other suppli
 merge: only fragments of the SAME concrete idea, not just similar topics. Sources will move to trash, so prefer null when uncertain.
 append: exactly two plainText notes; targetId is the existing longer note; the other must be the anchor, a useful new fragment. Existing text and source are preserved.
 insight: explain a specific useful connection to older knowledge, with supporting note IDs; no action is required.
-body must explain the actual connection and benefit, not describe your process. Distinguish inference from evidence.
+Keep the title to one short line. Keep body compact: at most 3 short lines, no bullets or headings, and at most 180 characters total.
+For Simplified Chinese, aim for no more than 90 Chinese characters. body must explain only the actual connection and benefit, not your process. Distinguish inference from evidence.
 For merge and insight targetId must be null. Reply in ${args.locale === "zh-CN" ? "Simplified Chinese" : "English"}.`,
     prompt: JSON.stringify({ anchorId: aliases.get(args.anchorId), notes: args.candidates.map(note => ({ ...note, id: aliases.get(note.id) })) }),
     decode(output: CompanionDiscoveryOutput): CompanionDiscoveryOutput {

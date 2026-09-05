@@ -37,11 +37,15 @@ export type CompanionDiscoverySettings = CompanionDiscoverySettingsInput & {
   lastCheckAt: string | null;
   lastStatus: "quiet" | "ready" | "failed" | "running";
 };
+const compactDiscoveryBody = z.string().trim().min(1).max(180).refine(
+  value => value.split(/\r?\n/).length <= 3,
+  "Discovery body must contain at most 3 lines.",
+);
 export const CompanionDiscoveryOutputSchema = z.object({
   suggestion: z.object({
     kind: z.enum(["insight", "merge", "append"]),
-    title: z.string().trim().min(1).max(120),
-    body: z.string().trim().min(1).max(400),
+    title: z.string().trim().min(1).max(60),
+    body: compactDiscoveryBody,
     sourceIds: z.array(z.string().min(1).max(100)).min(2).max(5),
     targetId: z.string().max(100).nullable(),
   }).nullable(),

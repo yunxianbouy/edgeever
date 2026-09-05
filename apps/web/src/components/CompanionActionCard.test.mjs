@@ -22,9 +22,8 @@ async function render(overrides = {}, busy = false, lng = "zh-CN") {
 describe("companion suggestion cards", () => {
   test("keeps merging behind an explicit preview with consequences and source order", async () => {
     const html = await render();
-    expect(html).toContain("<details>");
-    expect(html).not.toContain("<details open");
-    expect(html).toContain("确认合并");
+    expect(html).toContain("合并后的标题：Ideas");
+    expect(html).toContain(">确认<");
     expect(html).toContain("原公开分享失效");
     expect(html).toContain("不做 AI 改写或删减");
     expect(html.indexOf("Idea a")).toBeLessThan(html.indexOf("Idea b"));
@@ -33,13 +32,13 @@ describe("companion suggestion cards", () => {
     const html = await render({ plan: { kind: "tag", memoId: "a", tags: ["new"], reason: "One project" }, notes: action.notes.slice(0, 1) });
     expect(html).toContain("已有标签：original");
     expect(html).toContain("仅追加：new");
-    expect(html).toContain("确认追加标签");
-    expect(html).not.toContain("确认合并");
+    expect(html).toContain(">确认<");
+    expect(html).not.toContain("确认追加标签");
   });
   test("applied or invalid proposals cannot be confirmed again", async () => {
     expect(await render({ status: "applied", resultMemoId: "merged" })).toContain("打开处理后的笔记");
     for (const status of ["applied", "dismissed", "unavailable", "uncertain"]) {
-      expect(await render({ status })).not.toContain("确认合并");
+      expect(await render({ status })).not.toContain(">确认<");
     }
   });
   test("generic tool cards disclose exact replacements, targets and irreversible effects", async () => {
@@ -49,7 +48,7 @@ describe("companion suggestion cards", () => {
     expect(html).toContain("修改笔记");
     expect(html).toContain("写入的完整正文");
     expect(html).toContain("不是追加操作");
-    expect(html).toContain("确认执行此操作");
+    expect(html).toContain(">确认<");
     expect(html).not.toContain("<script>");
     expect(html).toContain("&lt;script&gt;");
   });
@@ -57,7 +56,7 @@ describe("companion suggestion cards", () => {
     for (const status of ["applied", "uncertain", "dismissed", "unavailable"]) {
       const html = await render({ plan: { kind: "tool", toolName: "create_memo", arguments: { title: "New" }, reason: "Requested" },
         notes: [], status, resultMemoId: "new", resultNotebookId: "nb", result: { memoId: "new" } }, false, "en-US");
-      expect(html).not.toContain("Confirm this operation");
+      expect(html).not.toContain(">Confirm<");
       expect(html).not.toContain("companion.actions.");
       if (status === "applied") expect(html).toContain("Open updated note");
       if (status === "uncertain") expect(html).toContain("will not run again");
