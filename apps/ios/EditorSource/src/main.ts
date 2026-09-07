@@ -1,5 +1,6 @@
 import "./styles.css";
 import "katex/dist/katex.min.css";
+import { Graph } from "@antv/x6";
 import { Editor, mergeAttributes, Node } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
@@ -15,15 +16,19 @@ import mermaid from "mermaid";
 import { toCanvas } from "html-to-image";
 import {
   createNativeUnsupportedContentExtensions,
+  diagramDocumentToX6Cells,
+  attachDiagramReader,
   diagramFallbackMarkdown,
   docToMarkdown,
   NativeAttachmentMetadata,
   prepareNativeEditorContent,
   parseDiagramDocument,
+  stripDiagramDocumentMarker,
   resolveAttachmentKind,
   resolveNativeAttachmentContent,
   restoreNativeEditorContent,
   type TiptapDoc,
+  type DiagramDocument,
 } from "@edgeever/shared";
 import {
   type NoteImageTheme,
@@ -366,6 +371,77 @@ async function renderMermaidBlocks(root: HTMLElement, theme: "light" | "dark") {
       // leave code block as-is
     }
   }
+}
+
+let viewerDiagramReader: ReturnType<typeof attachDiagramReader> | null = null;
+let viewerDiagramFrame: number | null = null;
+let viewerDiagram: DiagramDocument | null = null;
+let viewerDiagramGraph: Graph | null = null;
+let viewerDiagramObserver: ResizeObserver | null = null;
+let viewerDiagramContainer: HTMLElement | null = null;
+
+function clearViewerDiagramGraph() {
+  if (viewerDiagramFrame !== null) cancelAnimationFrame(viewerDiagramFrame);
+  viewerDiagramFrame = null;
+  viewerDiagramReader?.dispose();
+  viewerDiagramReader = null;
+  viewerDiagramObserver?.disconnect();
+  viewerDiagramObserver = null;
+  viewerDiagramGraph?.dispose();
+  viewerDiagramGraph = null;
+  viewerDiagramContainer?.remove();
+  viewerDiagramContainer = null;
+  editorEl.querySelector<HTMLElement>(".ProseMirror")?.removeAttribute("hidden");
+}
+
+function renderViewerDiagram(root: HTMLElement, diagram: DiagramDocument, theme: "light" | "dark") {
+  clearViewerDiagramGraph();
+  const proseMirror = root.querySelector<HTMLElement>(".ProseMirror");
+  if (!proseMirror) return false;
+  const cells = diagramDocumentToX6Cells(diagram, theme);
+  const container = document.createElement("div");
+  container.className = "edgeever-x6-diagram";
+  container.setAttribute("role", "img");
+  container.setAttribute("aria-label", diagram.kind === "mind-map" ? "思维导图" : diagram.kind === "architecture" ? "架构图" : "流程图");
+  // Keep TipTap's managed DOM intact. Replacing a node inside ProseMirror makes
+  // the next setContent call unreliable when SwiftUI reuses this WKWebView.
+  proseMirror.hidden = true;
+  root.append(container);
+  const parent = container.parentElement;
+  const measureWidth = () => {
+    if (!parent) return Math.max(1, container.clientWidth);
+    const style = getComputedStyle(parent);
+    const containerStyle = getComputedStyle(container);
+    const horizontalPadding = Number.parseFloat(style.paddingLeft || "0")
+      + Number.parseFloat(style.paddingRight || "0");
+    const horizontalMargin = Number.parseFloat(containerStyle.marginLeft || "0")
+      + Number.parseFloat(containerStyle.marginRight || "0");
+    return Math.max(1, parent.clientWidth - horizontalPadding - horizontalMargin);
+  };
+  const graph = new Graph({
+    container,
+    // The replacement node is empty at mount time and can briefly report 0.
+    // Anchor sizing to its stable parent so X6 cannot persist a 1px canvas.
+    width: measureWidth(),
+    height: Math.max(1, container.clientHeight),
+    background: { color: cells.canvas },
+    grid: false,
+    interacting: false,
+    panning: { enabled: true },
+    mousewheel: { enabled: true, minScale: 0.1, maxScale: 2.5 },
+  });
+  graph.addNodes(cells.nodes);
+  graph.addEdges(cells.edges);
+  const reader = attachDiagramReader(graph, container, { ...diagram, nodes: diagram.nodes.map((node, index) => ({ ...node, width: cells.nodes[index].width, height: cells.nodes[index].height })) }, locale, theme === "dark");
+  viewerDiagramReader = reader;
+  const fit = () => reader.resize(measureWidth(), Math.max(1, container.clientHeight));
+  viewerDiagramFrame = requestAnimationFrame(fit);
+  const observer = new ResizeObserver(fit);
+  observer.observe(parent ?? container);
+  viewerDiagramGraph = graph;
+  viewerDiagramObserver = observer;
+  viewerDiagramContainer = container;
+  return true;
 }
 
 const IMAGE_WIDTH_PRESETS = [
@@ -1203,7 +1279,10 @@ async function afterContentSet(theme: "light" | "dark" = "light") {
   decorateAttachmentLinks(editorEl);
   await hydrateProtectedImages(editorEl);
   if (mode === "viewer") {
-    await renderMermaidBlocks(editorEl, theme);
+    if (!viewerDiagram || !renderViewerDiagram(editorEl, viewerDiagram, theme)) {
+      clearViewerDiagramGraph();
+      await renderMermaidBlocks(editorEl, theme);
+    }
   }
 }
 
@@ -1368,7 +1447,10 @@ const api: EdgeEverEditorAPI = {
   setMarkdown(md) {
     suppressChange = true;
     const diagram = mode === "viewer" ? parseDiagramDocument(md) : null;
-    const displayMarkdown = diagram ? diagramFallbackMarkdown(diagram) : md;
+    viewerDiagram = diagram;
+    const displayMarkdown = mode === "viewer"
+      ? (diagram ? diagramFallbackMarkdown(diagram) : stripDiagramDocumentMarker(md))
+      : md;
     try {
       editor.commands.setContent(displayMarkdown || "", { contentType: "markdown" } as never);
     } catch {
@@ -1396,6 +1478,8 @@ const api: EdgeEverEditorAPI = {
 
   setDocumentFromJSON(json) {
     suppressChange = true;
+    viewerDiagram = null;
+    clearViewerDiagramGraph();
     try {
       const doc = JSON.parse(json) as TiptapDoc;
       editor.commands.setContent(prepareNativeEditorContent(

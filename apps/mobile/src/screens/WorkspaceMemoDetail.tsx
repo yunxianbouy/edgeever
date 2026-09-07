@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { DEFAULT_MEMO_TITLE, type MemoDetail, type TiptapDoc } from "@edgeever/shared";
+import { DEFAULT_MEMO_TITLE, parseDiagramDocument, type MemoDetail, type TiptapDoc } from "@edgeever/shared";
 import {
   type NoteImageTheme,
   type NoteImageFontStyle,
@@ -18,7 +18,7 @@ import { MobileAiAssistantModal } from "../components/MobileAiAssistantModal";
 import { MobileResourceActions } from "../components/MobileResourceActions";
 import { SAFE_DOM_WEBVIEW_PROPS } from "../lib/mobile-dom";
 import { getNextMobileNoteSearchIndex } from "../lib/mobile-note-search";
-import { getMobileVisualDiagramKind, resolveMobileMemoViewerContent } from "../lib/mobile-diagram";
+import { hasMobileVisualDiagram, resolveMobileMemoViewerContent } from "../lib/mobile-diagram";
 import { safeDomCall } from "../lib/safe-dom-call";
 import {
   getMobileImageTarget,
@@ -501,10 +501,14 @@ export const MemoDetailModal = ({
     () => (memo ? resolveMobileMemoViewerContent(memo.contentJson, memo.contentMarkdown) : { type: "doc", content: [{ type: "paragraph" }] }),
     [memo]
   );
-  const visualDiagramKind = useMemo(
-    () => (memo ? getMobileVisualDiagramKind(memo.contentMarkdown) : null),
+  const isVisualDiagram = useMemo(
+    () => (memo ? hasMobileVisualDiagram(memo.contentMarkdown) : false),
     [memo]
   );
+  const visualDiagramJson = useMemo(() => {
+    const diagram = memo ? parseDiagramDocument(memo.contentMarkdown) : null;
+    return diagram ? JSON.stringify(diagram) : undefined;
+  }, [memo]);
 
   const downloadResource = useCallback(async (target: MobileResourceTarget) => {
     if (!client) throw new Error(resolvedLocale === "en-US" ? "The resource client is unavailable." : "当前无法读取资源。");
@@ -965,7 +969,7 @@ export const MemoDetailModal = ({
         ) : memo ? (
           <View style={detailLayoutStyles.body}>
             <View style={detailLayoutStyles.meta}>
-              {!memo.isDeleted && !visualDiagramKind ? (
+              {!memo.isDeleted && !isVisualDiagram ? (
                 <Pressable
                   accessibilityHint="进入编辑并聚焦标题"
                   accessibilityLabel="编辑笔记标题"
@@ -1074,7 +1078,7 @@ export const MemoDetailModal = ({
                 locale={resolvedLocale}
                 mode="viewer"
                 onImagePreview={onImagePreview}
-                onDoublePress={visualDiagramKind ? undefined : async () => {
+                onDoublePress={isVisualDiagram ? undefined : async () => {
                   beginEditorStartup();
                   onRichEdit(memo, "body");
                 }}
@@ -1091,6 +1095,8 @@ export const MemoDetailModal = ({
                 }}
                 ref={viewerRef}
                 theme={resolvedTheme}
+                visualDiagramJson={visualDiagramJson}
+                visualDiagramNote={isVisualDiagram}
               />
             ) : (
               <View style={styles.centerState}>
@@ -1108,7 +1114,7 @@ export const MemoDetailModal = ({
             <Text style={styles.errorText}>笔记加载失败</Text>
           </View>
         )}
-        {memo && !memo.isDeleted && !visualDiagramKind ? (
+        {memo && !memo.isDeleted && !isVisualDiagram ? (
           <Pressable
             accessibilityLabel="编辑笔记"
             accessibilityRole="button"
@@ -1127,7 +1133,7 @@ export const MemoDetailModal = ({
               <Pressable style={styles.actionSheet}>
                 <View style={styles.actionSheetHandle} />
                 <Text style={styles.actionSheetTitle}>{resolvedLocale === "en-US" ? "Note actions" : "笔记操作"}</Text>
-                {!memo.isDeleted && !visualDiagramKind ? (
+                {!memo.isDeleted && !isVisualDiagram ? (
                   <DetailActionSheetItem
                     icon={<Sparkles color="#16A06E" size={18} />}
                     label={resolvedLocale === "en-US" ? "AI note assistant" : "AI 笔记助手"}

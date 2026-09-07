@@ -1,3 +1,5 @@
+import { Base64 } from "js-base64";
+
 export const DIAGRAM_SCHEMA_VERSION = 1 as const;
 export const ARCHITECTURE_DIAGRAM_SCHEMA_VERSION = 2 as const;
 
@@ -19,6 +21,20 @@ export type DiagramNodeShape =
 export type DiagramEdgeKind = "dependency" | "request" | "async" | "data";
 export type DiagramTheme = "brand" | "ocean" | "ink";
 
+export const ARCHITECTURE_RESOURCE_ICONS = [
+  "client", "webApp", "mobileApp", "website", "apiClient",
+  "service", "virtualMachine", "container", "kubernetes", "serverless",
+  "relationalDatabase", "noSqlDatabase", "cache", "dataWarehouse", "searchEngine",
+  "objectStorage", "fileStorage", "blockStorage", "backup", "cdn",
+  "messageQueue", "eventBus", "streamProcessing", "webhook", "serviceMesh",
+  "apiGateway", "loadBalancer", "dns", "vpc", "subnet", "vpn",
+  "identity", "firewall", "waf", "secretManager", "certificate", "systemBoundary",
+  "monitoring", "logging", "metrics", "tracing", "alerting",
+  "saas", "externalApi", "thirdPartyService",
+] as const;
+
+export type ArchitectureResourceIcon = typeof ARCHITECTURE_RESOURCE_ICONS[number];
+
 export type DiagramNode = {
   id: string;
   label: string;
@@ -28,6 +44,7 @@ export type DiagramNode = {
   height: number;
   shape: DiagramNodeShape;
   parentId?: string;
+  resourceIcon?: ArchitectureResourceIcon;
 };
 
 export type DiagramEdge = {
@@ -48,21 +65,14 @@ export type DiagramDocument = {
 };
 
 const DIAGRAM_MARKER = "edgeever-diagram-v1";
-const DIAGRAM_COMMENT = new RegExp(`<!--\\s*${DIAGRAM_MARKER}:([A-Za-z0-9_-]+)\\s*-->`);
+const DIAGRAM_COMMENT = new RegExp(`<!--\\s*${DIAGRAM_MARKER}:([\\s\\S]*?)\\s*-->`);
 
-const encodeBase64Url = (value: string) => {
-  const bytes = new TextEncoder().encode(value);
-  let binary = "";
-  for (const byte of bytes) binary += String.fromCharCode(byte);
-  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
-};
+// Keep the persisted envelope portable across browsers, Node/Bun, and React
+// Native's Hermes runtime. Hermes does not guarantee the browser globals used
+// by atob/btoa/TextEncoder/TextDecoder.
+const encodeBase64Url = (value: string) => Base64.encodeURI(value);
 
-const decodeBase64Url = (value: string) => {
-  const base64 = value.replace(/-/g, "+").replace(/_/g, "/");
-  const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, "=");
-  const binary = atob(padded);
-  return new TextDecoder().decode(Uint8Array.from(binary, (character) => character.charCodeAt(0)));
-};
+const decodeBase64Url = (value: string) => Base64.decode(value);
 
 const isFiniteNumber = (value: unknown): value is number =>
   typeof value === "number" && Number.isFinite(value);
@@ -85,6 +95,9 @@ const DIAGRAM_NODE_SHAPES: DiagramNodeShape[] = [
 ];
 const DIAGRAM_EDGE_KINDS: DiagramEdgeKind[] = ["dependency", "request", "async", "data"];
 
+const isArchitectureResourceIcon = (value: unknown): value is ArchitectureResourceIcon =>
+  typeof value === "string" && ARCHITECTURE_RESOURCE_ICONS.includes(value as ArchitectureResourceIcon);
+
 const parseNode = (value: unknown): DiagramNode | null => {
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
   const node = value as Record<string, unknown>;
@@ -103,6 +116,7 @@ const parseNode = (value: unknown): DiagramNode | null => {
     height: node.height,
     shape: node.shape as DiagramNodeShape,
     ...(typeof node.parentId === "string" && node.parentId ? { parentId: node.parentId } : {}),
+    ...(isArchitectureResourceIcon(node.resourceIcon) ? { resourceIcon: node.resourceIcon } : {}),
   };
 };
 
@@ -125,8 +139,8 @@ const parseEdge = (value: unknown): DiagramEdge | null => {
 };
 
 export const parseDiagramDocument = (markdown: string | null | undefined): DiagramDocument | null => {
-  const encoded = markdown?.match(DIAGRAM_COMMENT)?.[1];
-  if (!encoded) return null;
+  const encoded = markdown?.match(DIAGRAM_COMMENT)?.[1]?.replace(/\s+/g, "");
+  if (!encoded || !/^[A-Za-z0-9_-]+$/.test(encoded)) return null;
   try {
     const value = JSON.parse(decodeBase64Url(encoded)) as Record<string, unknown>;
     if (!DIAGRAM_KINDS.includes(value.kind as DiagramKind)) return null;
@@ -167,6 +181,12 @@ export const parseDiagramDocument = (markdown: string | null | undefined): Diagr
     return null;
   }
 };
+
+export const hasDiagramDocumentMarker = (markdown: string | null | undefined) =>
+  Boolean(markdown?.match(DIAGRAM_COMMENT));
+
+export const stripDiagramDocumentMarker = (markdown: string | null | undefined) =>
+  (markdown ?? "").replace(DIAGRAM_COMMENT, "").trimEnd();
 
 export const diagramFallbackMarkdown = (document: DiagramDocument) => {
   const title = document.kind === "mind-map" ? "思维导图" : document.kind === "architecture" ? "架构图" : "流程图";
@@ -342,4 +362,23 @@ export const createDefaultDiagramDocument = (kind: DiagramKind): DiagramDocument
       { id: "flow-edge-2", source: "flow-process", target: "flow-end" },
     ],
   };
+};
+
+export type DiagramSummaryPreview = { nodeCount: number; edgeCount: number; labels: string[] };
+
+/** Read-only, bounded list metadata; never ships the diagram payload to list rows. */
+export const getDiagramSummary = (markdown: string | null | undefined): {
+  diagramKind: DiagramKind | null;
+  diagramPreview?: DiagramSummaryPreview;
+} => {
+  const document = parseDiagramDocument(markdown);
+  if (!document) return { diagramKind: null };
+  const roots = new Set(document.nodes.filter((node) => !node.parentId).map((node) => node.id));
+  const primary = document.kind === "mind-map"
+    ? document.nodes.filter((node) => node.parentId && roots.has(node.parentId))
+    : document.kind === "architecture" ? document.nodes.filter((node) => node.shape === "boundary") : [];
+  const candidates = primary.length ? primary : document.nodes;
+  const labels = [...new Set(candidates.map((node) => node.label.replace(/\s+/g, " ").trim()).filter(Boolean))]
+    .slice(0, 4).map((label) => Array.from(label).slice(0, 48).join(""));
+  return { diagramKind: document.kind, diagramPreview: { nodeCount: document.nodes.length, edgeCount: document.edges.length, labels } };
 };

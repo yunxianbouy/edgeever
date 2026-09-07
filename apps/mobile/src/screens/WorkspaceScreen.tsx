@@ -19,7 +19,7 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Alert, Pressable, Text } from "../components/LocalizedText";
 import { ApiRequestError } from "@edgeever/client";
-import { DEFAULT_MEMO_TITLE, getNotebookDescendantIds, markdownToDoc, parseDiagramDocument, type MemoDetail } from "@edgeever/shared";
+import { DEFAULT_MEMO_TITLE, getNotebookDescendantIds, hasDiagramDocumentMarker, markdownToDoc, type MemoDetail } from "@edgeever/shared";
 import { MOBILE_UI_METRICS, toggleMobileMemoFilterMode } from "@edgeever/shared/mobile-ui";
 import { clearMobileMemoDraft, readMobileMemoDraft, type MobileMemoDraft } from "../lib/mobile-drafts";
 import {
@@ -435,7 +435,7 @@ export const WorkspaceScreen = ({
   }, []);
 
   const openRichEditor = useCallback(async (memo: MemoDetail, initialFocus: "body" | "title" = "body") => {
-    if (parseDiagramDocument(memo.contentMarkdown)) {
+    if (hasDiagramDocumentMarker(memo.contentMarkdown)) {
       Alert.alert(
         resolvedLocale === "en-US" ? "View-only diagram" : "图表暂为只读",
         resolvedLocale === "en-US"

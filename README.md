@@ -60,7 +60,7 @@ The iOS app requires an Apple ID from outside mainland China.
 - **Seamless Dual-View Editor**: Switch effortlessly between intuitive rich text editing and Markdown source code on desktop.
 - **Convenient Single-Note Export**: Export the current note directly as Markdown, HTML, or PDF for standalone storage, sharing, or publishing.
 - **Native Mermaid Diagram Rendering**: Render clear flowcharts, sequence diagrams, and mind maps directly in notes, preserving clean, editable source code across Markdown and rich text views.
-- **Visual Diagram Notes**: Create and edit mind maps, flowcharts, and architecture diagrams on Web and desktop with semantic components, system boundaries, labeled connections, automatic layout, revision history, and PNG/SVG export. The Android and iOS apps preserve the same diagram data and render a semantic read-only view.
+- **Visual Diagram Notes**: Create and edit mind maps, flowcharts, and architecture diagrams on Web and desktop with semantic components, system boundaries, labeled connections, automatic layout, revision history, and PNG/SVG export. The Android and iOS apps preserve the same diagram data and render a semantic read-only view. See the [visual diagram notes design](docs/visual-diagram-notes.md).
 - **Revision History**: Inspect and restore previous iterations of your notes with built-in version tracking.
 - **Public Note Sharing**: Share a note publicly and stop sharing it at any time.
 - **WeChat Article Clipping on Mobile**: Share a WeChat Official Account article to EdgeEver on your phone to extract its content and save it as an editable note.
@@ -233,7 +233,7 @@ Repository file: [docs/openapi.json](docs/openapi.json).
 
 ## MCP
 
-Create an API token in **Profile** -> **MCP settings** and give it to your AI Agent. The Agent can then securely read, organize, and import notes, manage note templates and AI instructions, and connect your notes with tools such as Notion databases and Feishu Bitable—all within your account permissions.
+Create an API token in **Profile** -> **MCP settings** and give it to your AI Agent. The Agent can then securely read, organize, and import notes, use `create_diagram_memo` to create editable mind map, flowchart, and architecture diagram notes from semantic graphs, and safely read or incrementally modify existing diagrams through `get_diagram` and `update_diagram`. EdgeEver manages node sizing and layout by default and only returns geometry when an explicit visual-layout task requests it. The Agent can also manage note templates and AI instructions and connect your notes with tools such as Notion databases and Feishu Bitable—all within your account permissions.
 
 > Let your ideas run free: ask an AI Agent to organize fleeting thoughts, build a personal knowledge graph, create a profile from your notes, or tag them automatically.
 
